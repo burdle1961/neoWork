@@ -49,8 +49,8 @@ void setup()
 void loop()
 {
   tft.fillScreen(TFT_WHITE);
-
-  ypos = 0;
+  xpos = 10;
+  ypos = 10;
   int16_t rc = png.openFLASH((uint8_t *)neoLFN_logo, sizeof(neoLFN_logo), pngDraw);
   if (rc == PNG_SUCCESS) {
     Serial.println("Successfully png file");
@@ -92,12 +92,29 @@ void loop()
   }
   delay(1000);
   
-  tft.fillRoundRect(xpos+5, ypos+5, 5, 20, 1, tft.color565(0, 200, 0));
-  delay(500);
-  tft.fillRoundRect(xpos+15, ypos+5, 5, 20, 1, tft.color565(200, 0, 0));
-  delay(100);
-  tft.fillRoundRect(xpos+25, ypos+5, 5, 20, 1, tft.color565(0, 0, 200));
+//  tft.fillRoundRect(xpos+5, ypos+5, 5, 20, 1, tft.color565(0, 200, 0));
+//  delay(500);
+//  tft.fillRoundRect(xpos+15, ypos+5, 5, 20, 1, tft.color565(200, 0, 0));
+//  delay(100);
+//  tft.fillRoundRect(xpos+25, ypos+5, 5, 20, 1, tft.color565(0, 0, 200));
+//  delay(3000);
+
+  xpos += 8;
+  for (int i = 0; i < 4; i++) {
+      tft.fillRoundRect(xpos+(i*8), ypos+6, 5, 18, 1, tft.color565(0, 200, 0));
+      delay(500);
+  } 
+
+  // Set "cursor" at top left corner of display (0,0) and select font 2
+  // (cursor will move to next line automatically during printing with 'tft.println'
+  //  or stay on the line is there is room for the text with tft.print)
+  tft.setCursor(100, 200, 2);
+  // Set the font colour to be white with a black background, set text size multiplier to 1
+  tft.setTextColor(TFT_BLACK,TFT_WHITE);  tft.setTextSize(2);
+  // We can now plot text on screen using the "print" class
+  tft.println("Battery");
   delay(3000);
+
 }
 
 
