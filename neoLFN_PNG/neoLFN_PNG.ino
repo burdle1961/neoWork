@@ -48,7 +48,8 @@ void setup()
 //====================================================================================
 void loop()
 {
-  int16_t rc = png.openFLASH((uint8_t *)panda, sizeof(panda), pngDraw);
+  ypos = 0;
+  int16_t rc = png.openFLASH((uint8_t *)neoLFN_logo, sizeof(neoLFN_logo), pngDraw);
   if (rc == PNG_SUCCESS) {
     Serial.println("Successfully png file");
     Serial.printf("image specs: (%d x %d), %d bpp, pixel type: %d\n", png.getWidth(), png.getHeight(), png.getBpp(), png.getPixelType());
@@ -60,6 +61,8 @@ void loop()
     // png.close(); // not needed for memory->memory decode
   }
   delay(3000);
+  
+  ypos = 100;
   rc = png.openFLASH((uint8_t *)neoLFN_kname, sizeof(neoLFN_kname), pngDraw);
   if (rc == PNG_SUCCESS) {
     Serial.println("Successfully png file");
@@ -72,18 +75,7 @@ void loop()
     // png.close(); // not needed for memory->memory decode
   }
   delay(3000);
-  rc = png.openFLASH((uint8_t *)neoLFN_serve_kid, sizeof(neoLFN_serve_kid), pngDraw);
-  if (rc == PNG_SUCCESS) {
-    Serial.println("Successfully png file");
-    Serial.printf("image specs: (%d x %d), %d bpp, pixel type: %d\n", png.getWidth(), png.getHeight(), png.getBpp(), png.getPixelType());
-    tft.startWrite();
-    uint32_t dt = millis();
-    rc = png.decode(NULL, 0);
-    Serial.print(millis() - dt); Serial.println("ms");
-    tft.endWrite();
-    // png.close(); // not needed for memory->memory decode
-  }
-  tft.fillScreen(random(0x10000));
+
 }
 
 
