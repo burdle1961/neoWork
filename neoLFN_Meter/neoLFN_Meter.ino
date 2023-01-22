@@ -179,11 +179,11 @@ void analogMeter()
 // #########################################################################
 void plotNeedle(int value, byte ms_delay)
 {
-
-  tft.setTextColor(TFT_BLACK, TFT_WHITE);
   char buf[8]; dtostrf((value+50)/5-10, 4, 0, buf);
-  tft.fillRect(110, 70, 50, 20, TFT_WHITE);
-  tft.drawCentreString(buf, 110, 60, 6);
+
+//  tft.fillRect(105, 60, 50, 50, TFT_WHITE);
+//  tft.setTextColor(TFT_BLACK, TFT_WHITE);
+//  tft.drawCentreString(buf, 112, 60, 6);
 
   if (value < -10) value = -10; // Limit value to emulate needle end stops
   if (value > 110) value = 110;
@@ -211,9 +211,9 @@ void plotNeedle(int value, byte ms_delay)
     tft.drawLine(120 + 20 * ltx + 2, 140 - 20, osx + 1, osy, TFT_WHITE);
 
     // Re-plot text under needle
-    tft.fillRect(110, 70, 50, 20, TFT_WHITE);
+    tft.fillRect(100, 60, 50, 50, TFT_WHITE);
     tft.setTextColor(TFT_BLACK);
-    tft.drawCentreString(buf, 110, 60, 6); // // Comment out to avoid font 4
+    tft.drawCentreString(buf, 112, 60, 6); // // Comment out to avoid font 4
 
     // Store new needle end coords for next erase
     ltx = tx;
