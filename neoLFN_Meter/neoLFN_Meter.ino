@@ -10,11 +10,20 @@
   ###### DON'T FORGET TO UPDATE THE User_Setup.h FILE IN THE LIBRARY ######
   #########################################################################
 */
+#include "NotoSansBold15.h"
+#include "NotoSansBold36.h"
+
+// Do not include "" around the array name!
+#define AA_FONT_SMALL NotoSansBold15
+#define AA_FONT_LARGE NotoSansBold36
 
 #include <TFT_eSPI.h> // Hardware-specific library
 #include <SPI.h>
 
 TFT_eSPI tft = TFT_eSPI();       // Invoke custom library
+
+// Callback function to provide the pixel color at x,y
+uint16_t pixelColor(uint16_t x, uint16_t y) { return tft.readPixel(x, y); }
 
 #define TFT_GREY 0x5AEB
 
@@ -37,6 +46,8 @@ void setup(void) {
   Serial.begin(57600); // For debug
   tft.fillScreen(TFT_BLACK);
 
+  tft.setCallback(pixelColor);  // Switch on color callback for anti-aliased fonts
+
   analogMeter(); // Draw analogue meter
 
   // Draw 6 linear meters
@@ -49,10 +60,20 @@ void setup(void) {
 //  plotLinear("A5", 5 * d, 160);
 
   updateTime = millis(); // Next update time
+
+
+  // Select a font size commensurate with screen size
+//  if (tft.width()>= 320)
+//    tft.loadFont(AA_FONT_LARGE);
+//  else
+//    tft.loadFont(AA_FONT_SMALL);
+  tft.loadFont(AA_FONT_LARGE);
+
 }
 
 
 void loop() {
+
   if (updateTime <= millis()) {
     updateTime = millis() + LOOP_PERIOD;
 
@@ -75,6 +96,12 @@ void loop() {
     plotNeedle(value[0], 0);
     //Serial.println(millis()-t); // Print time taken for meter update
   }
+
+  tft.setTextColor(TFT_WHITE, TFT_WHITE); // Background color is ignored if callback is set
+  tft.setCursor(0, 160); // Set cursor at top left of screen
+  tft.println("neoLFN\nServe&Kid\n12345.67890");
+ 
+  delay(2000);
 }
 
 

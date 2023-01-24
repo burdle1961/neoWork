@@ -49,7 +49,7 @@ void setup()
 void loop()
 {
   tft.fillScreen(TFT_WHITE);
-  xpos = 10;
+  xpos = 5;
   ypos = 10;
   int16_t rc = png.openFLASH((uint8_t *)neoLFN_logo, sizeof(neoLFN_logo), pngDraw);
   if (rc == PNG_SUCCESS) {
@@ -62,8 +62,21 @@ void loop()
     tft.endWrite();
     // png.close(); // not needed for memory->memory decode
   }
+  xpos = 80; ypos = 10;
+  rc = png.openFLASH((uint8_t *)neoLFN_servekid, sizeof(neoLFN_servekid), pngDraw);
+  if (rc == PNG_SUCCESS) {
+    Serial.println("Successfully png file");
+    Serial.printf("image specs: (%d x %d), %d bpp, pixel type: %d\n", png.getWidth(), png.getHeight(), png.getBpp(), png.getPixelType());
+    tft.startWrite();
+    uint32_t dt = millis();
+    rc = png.decode(NULL, 0);
+    Serial.print(millis() - dt); Serial.println("ms");
+    tft.endWrite();
+    // png.close(); // not needed for memory->memory decode
+  }
   delay(1000);
-  
+
+  xpos = 5;
   ypos = 100;
   rc = png.openFLASH((uint8_t *)neoLFN_kname, sizeof(neoLFN_kname), pngDraw);
   if (rc == PNG_SUCCESS) {
@@ -78,6 +91,7 @@ void loop()
   }
   delay(1000);
 
+  xpos = 5;
   ypos = 200;
   rc = png.openFLASH((uint8_t *)battery, sizeof(battery), pngDraw);
   if (rc == PNG_SUCCESS) {
@@ -113,7 +127,9 @@ void loop()
   tft.setTextColor(TFT_BLACK,TFT_WHITE);  tft.setTextSize(2);
   // We can now plot text on screen using the "print" class
   tft.println("Battery");
-  delay(3000);
+  delay(1000);
+
+
 
 }
 
