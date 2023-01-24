@@ -139,20 +139,20 @@ void analogMeter()
 
     // Green zone limits
     if (i >= -25 && i < -24) {
-      tft.fillTriangle(x0, y0, x1, y1, x2, y2, TFT_GREEN);
-      tft.fillTriangle(x1, y1, x2, y2, x3, y3, TFT_GREEN);
+      tft.fillTriangle(x0, y0, x1, y1, x2, y2, TFT_DARKGREEN);
+      tft.fillTriangle(x1, y1, x2, y2, x3, y3, TFT_DARKGREEN);
     }
 
     // Yellow zone limits
     if (i >= 0 && i < 25) {
-      tft.fillTriangle(x0, y0, x1, y1, x2, y2, TFT_YELLOW);
-      tft.fillTriangle(x1, y1, x2, y2, x3, y3, TFT_YELLOW);
+      tft.fillTriangle(x0, y0, x1, y1, x2, y2, TFT_GREENYELLOW);
+      tft.fillTriangle(x1, y1, x2, y2, x3, y3, TFT_GREENYELLOW);
     }
 
-    // Orange zone limits
+    // Magenta zone limits
     if (i >= 25 && i < 50) {
-      tft.fillTriangle(x0, y0, x1, y1, x2, y2, TFT_ORANGE);
-      tft.fillTriangle(x1, y1, x2, y2, x3, y3, TFT_ORANGE);
+      tft.fillTriangle(x0, y0, x1, y1, x2, y2, TFT_MAROON);
+      tft.fillTriangle(x1, y1, x2, y2, x3, y3, TFT_MAROON);
     }
 
     // Short scale tick length
