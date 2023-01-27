@@ -22,6 +22,10 @@
 
 TFT_eSPI tft = TFT_eSPI();       // Invoke custom library
 
+#define NEEDLE  80
+#define METER_X 120
+#define METER_Y 120
+
 // Callback function to provide the pixel color at x,y
 uint16_t pixelColor(uint16_t x, uint16_t y) { return tft.readPixel(x, y); }
 
@@ -50,8 +54,34 @@ void setup(void) {
 
   tft.loadFont(AA_FONT_LARGE);
 
+  tft.drawRect(10, 10, 228, 119, TFT_GREEN);
+//  tft.drawRect(9, 9, 230, 132, TFT_GREEN);
+  tft.drawRect(9, 9, 228, 119, TFT_GREEN);
+//  tft.fillRect(90, 95, 60, 30, TFT_GREEN); 
+
+  draw_tick();
 }
 
+
+void draw_tick() {
+uint16_t x0, y0, x1, y1;
+int leng;
+float pi2deg = 0.0174532915;
+
+    for (int i = 10 ; i <= 170 ; i += 8) {
+
+      if ((i-10) % 40 == 0) leng = 8;
+      else                  leng = 4;
+
+      x0 = METER_X + (NEEDLE+leng) * sin((i-90) * pi2deg);
+      y0 = METER_Y + (NEEDLE+leng) * cos((i+90) * pi2deg);
+
+      x1 = METER_X + (NEEDLE+1) * sin((i-90) * pi2deg);
+      y1 = METER_Y + (NEEDLE+1) * cos((i+90) * pi2deg);
+
+      tft.drawLine(x0, y0, x1, y1, TFT_YELLOW);
+    }
+}
 
 void loop() {
 uint16_t x0, y0, x1, y1, x2, y2, x3, y3;
@@ -61,11 +91,11 @@ uint16_t needle; // length of needle
 // x2, y2 : left vertex of needle
 // x3, y3 : right vertex of needle
 float pi2deg = 0.0174532915;
-needle = 100;
-x0 = 110;
-y0 = 110;
+needle = NEEDLE;
+x0 = METER_X;
+y0 = METER_Y;
 
-    for (int i = 0 ; i <= 180 ; i += 5) {
+    for (int i = 10 ; i <= 170 ; i++) {
 
       float sx = sin((i-90) * pi2deg);
       float sy = cos((i+90) * pi2deg);
@@ -73,23 +103,30 @@ y0 = 110;
       x1 = x0 + needle * sx;
       y1 = y0 + needle * sy;
 
-      x2 = x0 - 5;
-      y2 = y0;
+      x2 = x0 + (needle/4) * sin((i-10-90)*pi2deg);
+      y2 = y0 + (needle/4) * cos((i-10+90)*pi2deg);
 
-      x3 = x0 + 5;
-      y3 = y0;
+      x3 = x0 + (needle/4) * sin((i+10-90)*pi2deg);
+      y3 = y0 + (needle/4) * cos((i+10+90)*pi2deg);
 
       tft.fillTriangle(x0, y0, x1, y1, x2, y2, TFT_MAROON);
-      tft.fillTriangle(x0, y0, x1, y1, x3, y3, TFT_MAROON);
-      delay(500);
+      tft.fillTriangle(x0, y0, x1, y1, x3, y3, TFT_PURPLE);
+      tft.drawLine(x0, y0, x1, y1, TFT_RED);
+      tft.fillCircle(x0, y0-1, (needle/10-1), TFT_BLACK); 
+      tft.drawCircle(x0, y0-1, (needle/10-1), TFT_YELLOW); 
+//      tft.fillRect(90, 95, 60, 30, TFT_GREEN); 
+
+      delay(100);
+      tft.drawLine(x0, y0, x1, y1, TFT_BLACK);
       tft.fillTriangle(x0, y0, x1, y1, x2, y2, TFT_BLACK);
       tft.fillTriangle(x0, y0, x1, y1, x3, y3, TFT_BLACK);
-      
+      tft.fillCircle(x0, y0-1, (needle/10-1), TFT_BLACK); 
+      tft.drawCircle(x0, y0-1, (needle/10-1), TFT_YELLOW); 
+
 //      tft.drawLine(x0, y0, x1, y1, TFT_RED);
 //      delay(500);
 //      tft.drawLine(x0, y0, x1, y1, TFT_BLACK);
     }
-
 
     // Magenta zone limits
 //    if (i >= 25 && i < 50) {
