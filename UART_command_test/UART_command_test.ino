@@ -1,5 +1,7 @@
 #include <TFT_eSPI.h> // Graphics and font library for ILI9341 driver chip
 #include <SPI.h>
+#include "EEPROM.h"
+#define EEPROM_SIZE 8
 
 #define TFT_GREY 0x5AEB // New colour
 
@@ -26,6 +28,18 @@ float rpm;
 float kmh;
 float battery;
 
+// unsigned long --> 4 bytes
+union RTIME {
+  byte val[8];
+  unsigned long runtime[2];
+};
+
+union RTIME runtime;
+
+unsigned long thistime;
+unsigned long oldtime;
+
+float mdistance = 0.0f;
 
 #define RX_LENGTH  128
 uint8_t rx_buf[RX_LENGTH];
@@ -37,7 +51,7 @@ int cnt;
 
   tft.init();
   tft.setRotation(2);
-
+  
   // Fill screen with grey so we can see the effect of printing with and without 
   // a background colour defined
   tft.fillScreen(TFT_GREY);
@@ -46,11 +60,33 @@ int cnt;
   // (cursor will move to next line automatically during printing with 'tft.println'
   //  or stay on the line is there is room for the text with tft.print)
   tft.setCursor(0, 0, 2);
-  tft.println("Starting in 1000 msec.");
   
+  if (!EEPROM.begin(EEPROM_SIZE))
+  {
+    tft.println("failed to initialise EEPROM");
+    while (1) ;
+  } else {
+    for (int i = 0 ; i < EEPROM_SIZE ; i++) runtime.val[i] = EEPROM.read(i);
+    tft.print(runtime.runtime[0]);
+    tft.print(" ");
+    tft.println(runtime.runtime[1]);
+    
+    runtime.runtime[0] += runtime.runtime[1];
+    
+    for (int i = 0 ; i < EEPROM_SIZE ; i++) EEPROM.write(i, runtime.val[i]);
+    EEPROM.commit(); 
+  }
+
+
+  tft.println("Starting in 1000 msec.");
+ 
   Serial.begin(9600);
   delay(1000);
+
+  // EEPROM : 전회 운행 거리/시간을 누적 운행 거리/시간으로 이동하여 기록.
+  oldtime = millis();
   tft.println("Command : initializing");
+
 
 //  memset(rx_buf, 0, RX_LENGTH);
 //  cnt = send_command(cmd_init, 4, rx_buf);
@@ -85,6 +121,7 @@ int recvd;          // number of bytes received.
       recvd++;
     } 
   }
+  thistime = millis(); 
   return(recvd+1);
 }
 
@@ -105,13 +142,13 @@ float volt;
 
   tft.fillScreen(TFT_GREY);
   tft.setCursor(0, 0, 2);
-  for (int i = 0 ; i < cnt ; i++) {
-//    Serial.print(packet[i], HEX);
-//    Serial.print(" ");
-    tft.print(packet[i], HEX);
-    tft.print(' ');
-  }
-  tft.println();
+//  for (int i = 0 ; i < cnt ; i++) {
+////    Serial.print(packet[i], HEX);
+////    Serial.print(" ");
+//    tft.print(packet[i], HEX);
+//    tft.print(' ');
+//  }
+//  tft.println();
   
   if (packet[1] == 0x42) {
       pulse = packet[5]*256 + packet[6];
@@ -126,6 +163,16 @@ float volt;
         
       volt = (packet[10]*256+packet[11])/10;
 
+      mdistance += kmh/36 * (thistime - oldtime); // 이동거리는 cm/msec로 환산
+
+      
+      // 금번 운행 시간/거리를 EEPROM 기록
+      runtime.runtime[1] = thistime;
+      for (int i = 4 ; i < EEPROM_SIZE ; i++) EEPROM.write(i, runtime.val[i]);
+      EEPROM.commit();
+
+      // 누적 운행 시간/거리 + 금번 운행 시간/거리 ==> 총 누적 운행 시간/거리 (이 값을 누적 운행 거리/시간으로 표시)
+
       tft.print("Batt Lv : ");
       tft.println(packet[3]);
       tft.print("rpm : ");
@@ -134,6 +181,15 @@ float volt;
       tft.println(kmh);
       tft.print("battery(V) : ");
       tft.println(volt);
+      tft.print("Running Time (min) : ");
+      tft.println(thistime/60000);
+      tft.print("Cummative Time (min) : ");
+      tft.println((runtime.runtime[0] + thistime)/60000);
+      tft.print("Distance(Meter) : ");
+      tft.println(mdistance/100);     // 이동 거리 표시는 미터로 환산
+           
+      oldtime = thistime;       // 최근 측정 시각 기록
+
   }
 } 
 
@@ -146,5 +202,5 @@ int cnt;
   cnt = send_command(cmd_query, 6, rx_buf);
   display_data(rx_buf, cnt);
 
-  delay(2000);
+  delay(1000);
 }
