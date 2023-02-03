@@ -1,5 +1,6 @@
 #include <TFT_eSPI.h> // Graphics and font library for ILI9341 driver chip
 #include <SPI.h>
+#include "Button2.h"
 #include "EEPROM.h"
 #define EEPROM_SIZE 8
 
@@ -46,8 +47,22 @@ uint8_t rx_buf[RX_LENGTH];
 
 uint8_t CheckSum(uint8_t *, int);
 
+volatile boolean pressed = false;
+
+void IRAM_ATTR isr() {
+    pressed = true;
+//  for (int i = 0 ; i < EEPROM_SIZE ; i++) EEPROM.write(i,0);
+//  EEPROM.commit();
+}
+
 void setup() {
 int cnt;
+
+  pinMode(37, INPUT_PULLUP);      // center
+  pinMode(38, INPUT_PULLUP);      
+  pinMode(39, INPUT_PULLUP);
+
+  attachInterrupt(37, isr, FALLING);    // 스위치를 누르는 순간 확인
 
   tft.init();
   tft.setRotation(2);
@@ -67,9 +82,10 @@ int cnt;
     while (1) ;
   } else {
     for (int i = 0 ; i < EEPROM_SIZE ; i++) runtime.val[i] = EEPROM.read(i);
-    tft.print(runtime.runtime[0]);
+    
+    tft.print(runtime.runtime[0], HEX);
     tft.print(" ");
-    tft.println(runtime.runtime[1]);
+    tft.println(runtime.runtime[1], HEX);
     
     runtime.runtime[0] += runtime.runtime[1];
     
@@ -202,5 +218,12 @@ int cnt;
   cnt = send_command(cmd_query, 6, rx_buf);
   display_data(rx_buf, cnt);
 
+  if (pressed) { 
+      runtime.runtime[0] = 0;
+      runtime.runtime[1] = 0;   
+      for (int i = 0 ; i < EEPROM_SIZE ; i++) EEPROM.write(i,runtime.val[i]);
+      EEPROM.commit();
+      pressed = false;
+  }
   delay(1000);
 }
