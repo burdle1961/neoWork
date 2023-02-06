@@ -39,6 +39,7 @@ union RTIME runtime;
 
 unsigned long thistime;
 unsigned long oldtime;
+unsigned long checkpoint;     // last write time to EEPROM
 
 float mdistance = 0.0f;
 
@@ -48,9 +49,16 @@ uint8_t rx_buf[RX_LENGTH];
 uint8_t CheckSum(uint8_t *, int);
 
 volatile boolean pressed = false;
+volatile boolean pressed38 = false;
 
 void IRAM_ATTR isr() {
     pressed = true;
+//  for (int i = 0 ; i < EEPROM_SIZE ; i++) EEPROM.write(i,0);
+//  EEPROM.commit();
+}
+
+void IRAM_ATTR isr38() {
+    pressed38 = true;
 //  for (int i = 0 ; i < EEPROM_SIZE ; i++) EEPROM.write(i,0);
 //  EEPROM.commit();
 }
@@ -63,6 +71,7 @@ int cnt;
   pinMode(39, INPUT_PULLUP);
 
   attachInterrupt(37, isr, FALLING);    // 스위치를 누르는 순간 확인
+  attachInterrupt(38, isr38, FALLING);    // 스위치를 누르는 순간 확인
 
   tft.init();
   tft.setRotation(2);
@@ -81,16 +90,26 @@ int cnt;
     tft.println("failed to initialise EEPROM");
     while (1) ;
   } else {
+    delay(100);
+    tft.println("Read previous saved data from EEPROM");
     for (int i = 0 ; i < EEPROM_SIZE ; i++) runtime.val[i] = EEPROM.read(i);
     
-    tft.print(runtime.runtime[0], HEX);
+    tft.println(runtime.runtime[0]);
     tft.print(" ");
-    tft.println(runtime.runtime[1], HEX);
+    tft.println(runtime.runtime[1]);
     
-    runtime.runtime[0] += runtime.runtime[1];
-    
+    runtime.runtime[0] += runtime.runtime[1];   // 누적시간 + 직전 운행시간
+    runtime.runtime[1] = 0;
     for (int i = 0 ; i < EEPROM_SIZE ; i++) EEPROM.write(i, runtime.val[i]);
     EEPROM.commit(); 
+    delay(100);                                 //write 후 대기???
+    
+    for (int i = 0 ; i < EEPROM_SIZE ; i++) runtime.val[i] = EEPROM.read(i);
+
+    tft.println("------------");
+    tft.println(runtime.runtime[0]);
+    tft.print(" ");
+    tft.println(runtime.runtime[1]);
   }
 
 
@@ -101,6 +120,7 @@ int cnt;
 
   // EEPROM : 전회 운행 거리/시간을 누적 운행 거리/시간으로 이동하여 기록.
   oldtime = millis();
+  checkpoint = oldtime;
   tft.println("Command : initializing");
 
 
@@ -184,9 +204,14 @@ float volt;
       
       // 금번 운행 시간/거리를 EEPROM 기록
       runtime.runtime[1] = thistime;
-      for (int i = 4 ; i < EEPROM_SIZE ; i++) EEPROM.write(i, runtime.val[i]);
-      EEPROM.commit();
 
+      // EEPROM write 수명을 고려하여 write 주기 조정 : 5분 x 60 초 x 1000 msec = 300000
+      if (((thistime - checkpoint) > 300000)|| pressed38) {
+          for (int i = 4 ; i < EEPROM_SIZE ; i++) EEPROM.write(i, runtime.val[i]);
+          EEPROM.commit();
+          checkpoint = thistime;
+          pressed38 = false;
+      }
       // 누적 운행 시간/거리 + 금번 운행 시간/거리 ==> 총 누적 운행 시간/거리 (이 값을 누적 운행 거리/시간으로 표시)
 
       tft.print("Batt Lv : ");
@@ -197,10 +222,12 @@ float volt;
       tft.println(kmh);
       tft.print("battery(V) : ");
       tft.println(volt);
-      tft.print("Running Time (min) : ");
-      tft.println(thistime/60000);
-      tft.print("Cummative Time (min) : ");
-      tft.println((runtime.runtime[0] + thistime)/60000);
+      tft.print("Running Time (sec) : ");
+      tft.print(runtime.runtime[1]/1000);
+      tft.print("=");
+      tft.println(thistime/1000);
+      tft.print("Prev. Cummative Time (sec) : ");
+      tft.println(runtime.runtime[0]/1000);
       tft.print("Distance(Meter) : ");
       tft.println(mdistance/100);     // 이동 거리 표시는 미터로 환산
            
@@ -219,7 +246,7 @@ int cnt;
   display_data(rx_buf, cnt);
 
   if (pressed) { 
-      runtime.runtime[0] = 0;
+      runtime.runtime[0] = 0;        // initial value 1000 & 100 (test purpose, should be zero at production)
       runtime.runtime[1] = 0;   
       for (int i = 0 ; i < EEPROM_SIZE ; i++) EEPROM.write(i,runtime.val[i]);
       EEPROM.commit();
