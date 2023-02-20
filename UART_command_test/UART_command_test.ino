@@ -116,6 +116,7 @@ int cnt;
   tft.println("Starting in 1000 msec.");
  
   Serial.begin(9600);
+//  Serial2.begin(9600, SERIAL_8N1, 32, 34);    // TX 32, RX 34
   delay(1000);
 
   // EEPROM : 전회 운행 거리/시간을 누적 운행 거리/시간으로 이동하여 기록.
@@ -148,6 +149,7 @@ int recvd;          // number of bytes received.
 
   // send command
   for (int i = 0 ; i < cmd_length ; i++) Serial.write(cmd[i]);
+//  for (int i = 0 ; i < cmd_length ; i++) Serial2.write(cmd[i]);
 
   recvd = 0;
   while (true) {
